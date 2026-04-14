@@ -34,6 +34,44 @@ function fillForm(data) {
   });
 }
 
+function isImageFile(file) {
+  return file && file.type.startsWith('image/');
+}
+
+function isPdfFile(file) {
+  return file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+}
+
+async function parseRawText(rawText) {
+  const response = await fetch('/api/parse-text', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ rawText }),
+  });
+
+  return response.json();
+}
+
+async function processImageInBrowser(file) {
+  if (!window.Tesseract) {
+    throw new Error('Tesseract no esta disponible en el navegador');
+  }
+
+  const result = await window.Tesseract.recognize(file, 'spa+eng', {
+    logger: (message) => {
+      if (message.status === 'recognizing text') {
+        const progress = Math.round((message.progress || 0) * 100);
+        setStatus(`Procesando imagen en el navegador... ${progress}%`);
+      }
+    },
+  });
+
+  const payload = await parseRawText(result.data?.text || '');
+  return payload;
+}
+
 async function processSelectedFile(event) {
   if (event) {
     event.preventDefault();
@@ -53,17 +91,25 @@ async function processSelectedFile(event) {
 
   setStatus('Procesando comprobante, esto puede tardar unos segundos...');
 
-  const formData = new FormData();
-  formData.append('receipt', file);
-
   try {
-    const response = await fetch('/api/process-expense', {
-      method: 'POST',
-      body: formData,
-    });
-    const payload = await response.json();
+    let payload;
 
-    if (!response.ok || !payload.ok) {
+    if (isImageFile(file)) {
+      payload = await processImageInBrowser(file);
+    } else if (isPdfFile(file)) {
+      const formData = new FormData();
+      formData.append('receipt', file);
+
+      const response = await fetch('/api/process-expense', {
+        method: 'POST',
+        body: formData,
+      });
+      payload = await response.json();
+    } else {
+      throw new Error('Tipo de archivo no soportado');
+    }
+
+    if (!payload.ok) {
       setStatus(payload.message || 'No se pudo procesar el comprobante.', 'error');
       resultPanel.classList.add('hidden');
       return;

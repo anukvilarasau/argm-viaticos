@@ -337,6 +337,25 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+app.post('/api/parse-text', (req, res) => {
+  const rawText = String(req.body?.rawText || '');
+
+  if (!rawText.trim()) {
+    res.status(400).json({
+      ok: false,
+      message: config.retry_message,
+    });
+    return;
+  }
+
+  res.json({
+    ok: true,
+    rawText,
+    extracted: parseExpenseData(rawText),
+    followUpQuestions: config.required_follow_up_questions,
+  });
+});
+
 app.post('/api/process-expense', upload.single('receipt'), async (req, res) => {
   if (!req.file) {
     res.status(400).json({
