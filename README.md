@@ -12,5 +12,10 @@ Este workspace quedo preparado con la configuracion base del agente "Asistente d
 3. Verifica que la hoja de destino se llame exactamente `Control de Viáticos - Argenteo Mining SA`.
 4. Inicia el agente con el mensaje inicial ya incluido en el prompt.
 
+## Credenciales en produccion
+Para Vercel u otros despliegues, puedes configurar Google Sheets de dos formas:
+- Opcion recomendada: una sola variable `GOOGLE_SERVICE_ACCOUNT_JSON` con el JSON completo de la cuenta de servicio.
+- Opcion alternativa: `GOOGLE_SERVICE_ACCOUNT_EMAIL` y `GOOGLE_PRIVATE_KEY`.
+
 ## Mensaje de inicio
 He cargado la configuracion del agente de viaticos de Argenteo Mining SA y los parametros de Google Sheets para la hoja "Control de Viáticos - Argenteo Mining SA". Estoy listo para procesar imagenes o archivos adjuntos y registrar la informacion automaticamente. Puedes enviarme el primer comprobante para "Control de Viáticos - Argenteo Mining SA 2".

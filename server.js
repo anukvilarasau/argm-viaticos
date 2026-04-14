@@ -266,6 +266,17 @@ function getSheetsClient() {
   let privateKey = process.env.GOOGLE_PRIVATE_KEY
     ? process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n')
     : '';
+  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '';
+
+  if (serviceAccountJson && (!clientEmail || !privateKey)) {
+    try {
+      const parsed = JSON.parse(serviceAccountJson);
+      clientEmail = parsed.client_email || '';
+      privateKey = parsed.private_key || '';
+    } catch (_error) {
+      // Ignore invalid JSON here and fall through to other credential sources.
+    }
+  }
 
   if ((!clientEmail || !privateKey) && fs.existsSync(localServiceAccountPath)) {
     const raw = JSON.parse(fs.readFileSync(localServiceAccountPath, 'utf8'));
@@ -324,6 +335,7 @@ async function appendToFallback(payload) {
 
 app.get('/api/health', (_req, res) => {
   const sheetsConfigured = Boolean(
+    process.env.GOOGLE_SERVICE_ACCOUNT_JSON ||
     (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) ||
       fs.existsSync(localServiceAccountPath)
   );
