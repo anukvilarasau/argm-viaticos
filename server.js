@@ -1,5 +1,6 @@
 const express = require('express');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const multer = require('multer');
 const { PDFParse } = require('pdf-parse');
@@ -10,8 +11,13 @@ const config = require('./google_sheets_config.json');
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
-const uploadsDir = path.join(__dirname, 'uploads');
-const dataDir = path.join(__dirname, 'data');
+const runtimeRoot = process.env.VERCEL ? os.tmpdir() : __dirname;
+const uploadsDir = process.env.VERCEL
+  ? path.join(runtimeRoot, 'argenteo-uploads')
+  : path.join(__dirname, 'uploads');
+const dataDir = process.env.VERCEL
+  ? path.join(runtimeRoot, 'argenteo-data')
+  : path.join(__dirname, 'data');
 const fallbackDb = path.join(dataDir, 'submissions.json');
 const localServiceAccountPath = path.join(__dirname, 'service-account.json');
 
@@ -436,6 +442,10 @@ app.post('/api/save-expense', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Asistente de Viaticos disponible en http://localhost:${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Asistente de Viaticos disponible en http://localhost:${port}`);
+  });
+}
+
+module.exports = app;
