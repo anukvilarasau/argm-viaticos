@@ -9,6 +9,7 @@ const saveResultNode = document.getElementById('save-result');
 let isUploading = false;
 let isSaving = false;
 const loadedScripts = new Map();
+let pdfJsModulePromise = null;
 const isLocalhost =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
@@ -82,17 +83,17 @@ async function ensurePdfJs() {
     return window.pdfjsLib;
   }
 
-  if (window['pdfjs-dist/build/pdf']) {
-    window.pdfjsLib = window['pdfjs-dist/build/pdf'];
-    return window.pdfjsLib;
+  if (!pdfJsModulePromise) {
+    pdfJsModulePromise = import('/vendor/pdf.min.mjs');
   }
 
-  await loadScriptOnce('pdfjs', 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js');
-  if (!window.pdfjsLib) {
-    throw new Error('No se pudo inicializar el lector PDF en el navegador');
+  const module = await pdfJsModulePromise;
+  if (!module || typeof module.getDocument !== 'function') {
+    throw new Error('No se pudo inicializar el lector PDF local');
   }
 
-  return window.pdfjsLib;
+  window.pdfjsLib = module;
+  return module;
 }
 
 async function parseRawText(rawText) {
@@ -149,8 +150,7 @@ async function extractPdfTextInBrowser(file) {
   const pdfjsLib = await ensurePdfJs();
 
   if (pdfjsLib.GlobalWorkerOptions) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdf.worker.min.mjs';
   }
 
   const arrayBuffer = await file.arrayBuffer();
@@ -180,8 +180,7 @@ async function ocrPdfInBrowser(file) {
   const Tesseract = await ensureTesseract();
 
   if (pdfjsLib.GlobalWorkerOptions) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdf.worker.min.mjs';
   }
 
   const arrayBuffer = await file.arrayBuffer();
