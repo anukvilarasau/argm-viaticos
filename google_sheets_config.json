@@ -1,0 +1,30 @@
+{
+  "spreadsheet_id": "12wbKrHrHqV_UtToojXlRQHopBRo1nypriT9C4FQAbPY",
+  "sheet_name": "Control de Viáticos - Argenteo Mining SA",
+  "value_input_option": "USER_ENTERED",
+  "mapping_columns": {
+    "A": "Fecha",
+    "B": "Número de Factura",
+    "C": "Proveedor",
+    "D": "ID Fiscal Proveedor",
+    "E": "Descripción",
+    "F": "Subtotal",
+    "G": "Impuestos",
+    "H": "Total",
+    "I": "Método de Pago",
+    "J": "Categoría",
+    "K": "Motivo del Gasto",
+    "L": "Zona del Empleado"
+  },
+  "accepted_file_types": [
+    "pdf",
+    "jpg",
+    "jpeg",
+    "png"
+  ],
+  "required_follow_up_questions": [
+    "Cual es el motivo del gasto?",
+    "A que zona perteneces? (ZN, ZCE, ZCO, ZS)"
+  ],
+  "retry_message": "No he podido procesar este archivo, podrias intentar enviarlo de nuevo o adjuntar una foto mas clara?"
+}

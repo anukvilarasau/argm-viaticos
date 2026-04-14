@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asistente de Viaticos de Argenteo Mining</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Argenteo Mining SA</p>
+        <h1>Asistente de Viaticos</h1>
+        <p class="lead">
+          Carga una factura o recibo en PDF, JPG o PNG. El sistema extrae los
+          datos, te pide el motivo y la zona, y deja la rendicion lista para
+          registrarse en Google Sheets.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>1. Cargar comprobante</h2>
+        <form id="upload-form" class="upload-form">
+          <label class="dropzone" for="receipt">
+            <input id="receipt" name="receipt" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+            <span class="dropzone-title">Seleccionar archivo</span>
+            <span class="dropzone-help">Soporta fotos de camara, capturas de pantalla o PDF.</span>
+            <span id="selected-file" class="selected-file">Todavia no seleccionaste ningun archivo.</span>
+          </label>
+          <button type="submit">Procesar comprobante</button>
+        </form>
+        <p id="status" class="status">He cargado la configuracion del agente y estoy listo para recibir el primer comprobante.</p>
+      </section>
+
+      <section id="result-panel" class="panel hidden">
+        <h2>2. Revisar datos extraidos</h2>
+        <form id="details-form" class="details-form" novalidate>
+          <div class="grid">
+            <label><span>Fecha</span><input name="fecha" /></label>
+            <label><span>Factura</span><input name="factura" /></label>
+            <label><span>Proveedor</span><input name="proveedor" /></label>
+            <label><span>ID Fiscal</span><input name="idFiscal" /></label>
+            <label><span>Descripcion</span><input name="descripcion" /></label>
+            <label><span>Subtotal</span><input name="subtotal" /></label>
+            <label><span>Impuestos</span><input name="impuestos" /></label>
+            <label><span>Total</span><input name="total" /></label>
+            <label><span>Pago</span><input name="pago" /></label>
+            <label><span>Categoria</span><input name="categoria" /></label>
+            <label><span>Motivo del gasto</span><input name="motivo" required /></label>
+            <label>
+              <span>Zona</span>
+              <select name="zona" required>
+                <option value="">Seleccionar</option>
+                <option value="ZN">ZN</option>
+                <option value="ZCE">ZCE</option>
+                <option value="ZCO">ZCO</option>
+                <option value="ZS">ZS</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit">Registrar rendicion</button>
+        </form>
+        <p id="save-result" class="save-result hidden"></p>
+        <details class="raw-output">
+          <summary>Ver texto detectado</summary>
+          <pre id="raw-text"></pre>
+        </details>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+  </html>
