@@ -42,6 +42,19 @@ function isPdfFile(file) {
   return file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
 }
 
+async function ensurePdfJs() {
+  if (window.pdfjsLib) {
+    return window.pdfjsLib;
+  }
+
+  if (window['pdfjs-dist/build/pdf']) {
+    window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+    return window.pdfjsLib;
+  }
+
+  return null;
+}
+
 async function parseRawText(rawText) {
   const response = await fetch('/api/parse-text', {
     method: 'POST',
@@ -72,6 +85,93 @@ async function processImageInBrowser(file) {
   return payload;
 }
 
+async function extractPdfTextInBrowser(file) {
+  const pdfjsLib = await ensurePdfJs();
+  if (!pdfjsLib) {
+    throw new Error('PDF.js no esta disponible en el navegador');
+  }
+
+  if (pdfjsLib.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.js';
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages = [];
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    setStatus(`Leyendo PDF en el navegador... pagina ${pageNumber} de ${pdf.numPages}`);
+    const page = await pdf.getPage(pageNumber);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items
+      .map((item) => item.str || '')
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (pageText) {
+      pages.push(pageText);
+    }
+  }
+
+  return pages.join('\n');
+}
+
+async function ocrPdfInBrowser(file) {
+  const pdfjsLib = await ensurePdfJs();
+  if (!pdfjsLib || !window.Tesseract) {
+    throw new Error('No hay soporte suficiente en el navegador para OCR de PDF');
+  }
+
+  if (pdfjsLib.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.js';
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const maxPages = Math.min(pdf.numPages, 3);
+  const texts = [];
+
+  for (let pageNumber = 1; pageNumber <= maxPages; pageNumber += 1) {
+    setStatus(`Aplicando OCR al PDF... pagina ${pageNumber} de ${maxPages}`);
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({
+      canvasContext: context,
+      viewport,
+    }).promise;
+
+    const result = await window.Tesseract.recognize(canvas, 'spa+eng', {
+      logger: (message) => {
+        if (message.status === 'recognizing text') {
+          const progress = Math.round((message.progress || 0) * 100);
+          setStatus(`OCR del PDF en navegador... pagina ${pageNumber}/${maxPages} ${progress}%`);
+        }
+      },
+    });
+
+    texts.push(result.data?.text || '');
+  }
+
+  return texts.join('\n');
+}
+
+async function processPdfInBrowser(file) {
+  let rawText = await extractPdfTextInBrowser(file);
+  if (!rawText.trim()) {
+    rawText = await ocrPdfInBrowser(file);
+  }
+
+  return parseRawText(rawText);
+}
+
 async function processSelectedFile(event) {
   if (event) {
     event.preventDefault();
@@ -97,14 +197,7 @@ async function processSelectedFile(event) {
     if (isImageFile(file)) {
       payload = await processImageInBrowser(file);
     } else if (isPdfFile(file)) {
-      const formData = new FormData();
-      formData.append('receipt', file);
-
-      const response = await fetch('/api/process-expense', {
-        method: 'POST',
-        body: formData,
-      });
-      payload = await response.json();
+      payload = await processPdfInBrowser(file);
     } else {
       throw new Error('Tipo de archivo no soportado');
     }
