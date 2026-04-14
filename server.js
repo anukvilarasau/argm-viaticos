@@ -3,9 +3,6 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const multer = require('multer');
-const { PDFParse } = require('pdf-parse');
-const { createWorker } = require('tesseract.js');
-const { google } = require('googleapis');
 
 const config = require('./google_sheets_config.json');
 
@@ -235,6 +232,7 @@ function parseExpenseData(text) {
 }
 
 async function extractTextFromPdf(filePath) {
+  const { PDFParse } = require('pdf-parse');
   const buffer = fs.readFileSync(filePath);
   const parser = new PDFParse({ data: buffer });
   try {
@@ -246,6 +244,7 @@ async function extractTextFromPdf(filePath) {
 }
 
 async function extractTextFromImage(filePath) {
+  const { createWorker } = require('tesseract.js');
   const worker = await createWorker('eng+spa');
   try {
     const result = await worker.recognize(filePath);
@@ -283,6 +282,7 @@ function getSheetsClient() {
     private_key: privateKey,
   };
 
+  const { google } = require('googleapis');
   const auth = new google.auth.GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
