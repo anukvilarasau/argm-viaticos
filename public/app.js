@@ -9,6 +9,8 @@ const saveResultNode = document.getElementById('save-result');
 let isUploading = false;
 let isSaving = false;
 const loadedScripts = new Map();
+const isLocalhost =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 function setStatus(message, kind = '') {
   statusNode.textContent = message;
@@ -252,15 +254,39 @@ async function processSelectedFile(event) {
       try {
         payload = await processImageInBrowser(file);
       } catch (browserError) {
+        if (!isLocalhost) {
+          throw new Error(
+            `Fallo el OCR en el navegador: ${browserError.message}. En produccion no se usara el fallback del servidor para no ocultar el error real.`
+          );
+        }
+
         setStatus('El OCR del navegador fallo. Intentando en el servidor...');
-        payload = await processFileOnServer(file);
+        try {
+          payload = await processFileOnServer(file);
+        } catch (serverError) {
+          throw new Error(
+            `Fallo el OCR en el navegador: ${browserError.message}. Tambien fallo el servidor: ${serverError.message}.`
+          );
+        }
       }
     } else if (isPdfFile(file)) {
       try {
         payload = await processPdfInBrowser(file);
       } catch (browserError) {
+        if (!isLocalhost) {
+          throw new Error(
+            `Fallo la lectura del PDF en el navegador: ${browserError.message}. En produccion no se usara el fallback del servidor para no ocultar el error real.`
+          );
+        }
+
         setStatus('La lectura del PDF en navegador fallo. Intentando en el servidor...');
-        payload = await processFileOnServer(file);
+        try {
+          payload = await processFileOnServer(file);
+        } catch (serverError) {
+          throw new Error(
+            `Fallo la lectura del PDF en el navegador: ${browserError.message}. Tambien fallo el servidor: ${serverError.message}.`
+          );
+        }
       }
     } else {
       throw new Error('Tipo de archivo no soportado');
