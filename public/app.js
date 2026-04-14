@@ -8,6 +8,7 @@ const selectedFileNode = document.getElementById('selected-file');
 const saveResultNode = document.getElementById('save-result');
 let isUploading = false;
 let isSaving = false;
+const loadedScripts = new Map();
 
 function setStatus(message, kind = '') {
   statusNode.textContent = message;
@@ -42,6 +43,38 @@ function isPdfFile(file) {
   return file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
 }
 
+function loadScriptOnce(key, src) {
+  if (loadedScripts.has(key)) {
+    return loadedScripts.get(key);
+  }
+
+  const promise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.dataset.lib = key;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`No se pudo cargar ${key} desde CDN`));
+    document.head.appendChild(script);
+  });
+
+  loadedScripts.set(key, promise);
+  return promise;
+}
+
+async function ensureTesseract() {
+  if (window.Tesseract) {
+    return window.Tesseract;
+  }
+
+  await loadScriptOnce('tesseract', 'https://cdn.jsdelivr.net/npm/tesseract.js@6/dist/tesseract.min.js');
+  if (!window.Tesseract) {
+    throw new Error('No se pudo inicializar el OCR en el navegador');
+  }
+
+  return window.Tesseract;
+}
+
 async function ensurePdfJs() {
   if (window.pdfjsLib) {
     return window.pdfjsLib;
@@ -52,7 +85,12 @@ async function ensurePdfJs() {
     return window.pdfjsLib;
   }
 
-  return null;
+  await loadScriptOnce('pdfjs', 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js');
+  if (!window.pdfjsLib) {
+    throw new Error('No se pudo inicializar el lector PDF en el navegador');
+  }
+
+  return window.pdfjsLib;
 }
 
 async function parseRawText(rawText) {
@@ -64,15 +102,35 @@ async function parseRawText(rawText) {
     body: JSON.stringify({ rawText }),
   });
 
-  return response.json();
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.message || 'No se pudo interpretar el texto extraido');
+  }
+
+  return payload;
+}
+
+async function processFileOnServer(file) {
+  const formData = new FormData();
+  formData.append('receipt', file);
+
+  const response = await fetch('/api/process-expense', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.message || 'No se pudo procesar el archivo');
+  }
+
+  return payload;
 }
 
 async function processImageInBrowser(file) {
-  if (!window.Tesseract) {
-    throw new Error('Tesseract no esta disponible en el navegador');
-  }
+  const Tesseract = await ensureTesseract();
 
-  const result = await window.Tesseract.recognize(file, 'spa+eng', {
+  const result = await Tesseract.recognize(file, 'spa+eng', {
     logger: (message) => {
       if (message.status === 'recognizing text') {
         const progress = Math.round((message.progress || 0) * 100);
@@ -87,9 +145,6 @@ async function processImageInBrowser(file) {
 
 async function extractPdfTextInBrowser(file) {
   const pdfjsLib = await ensurePdfJs();
-  if (!pdfjsLib) {
-    throw new Error('PDF.js no esta disponible en el navegador');
-  }
 
   if (pdfjsLib.GlobalWorkerOptions) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -120,9 +175,7 @@ async function extractPdfTextInBrowser(file) {
 
 async function ocrPdfInBrowser(file) {
   const pdfjsLib = await ensurePdfJs();
-  if (!pdfjsLib || !window.Tesseract) {
-    throw new Error('No hay soporte suficiente en el navegador para OCR de PDF');
-  }
+  const Tesseract = await ensureTesseract();
 
   if (pdfjsLib.GlobalWorkerOptions) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -148,7 +201,7 @@ async function ocrPdfInBrowser(file) {
       viewport,
     }).promise;
 
-    const result = await window.Tesseract.recognize(canvas, 'spa+eng', {
+    const result = await Tesseract.recognize(canvas, 'spa+eng', {
       logger: (message) => {
         if (message.status === 'recognizing text') {
           const progress = Math.round((message.progress || 0) * 100);
@@ -190,14 +243,25 @@ async function processSelectedFile(event) {
   isUploading = true;
 
   setStatus('Procesando comprobante, esto puede tardar unos segundos...');
+  setSaveResult();
 
   try {
     let payload;
 
     if (isImageFile(file)) {
-      payload = await processImageInBrowser(file);
+      try {
+        payload = await processImageInBrowser(file);
+      } catch (browserError) {
+        setStatus('El OCR del navegador fallo. Intentando en el servidor...');
+        payload = await processFileOnServer(file);
+      }
     } else if (isPdfFile(file)) {
-      payload = await processPdfInBrowser(file);
+      try {
+        payload = await processPdfInBrowser(file);
+      } catch (browserError) {
+        setStatus('La lectura del PDF en navegador fallo. Intentando en el servidor...');
+        payload = await processFileOnServer(file);
+      }
     } else {
       throw new Error('Tipo de archivo no soportado');
     }
@@ -214,7 +278,10 @@ async function processSelectedFile(event) {
     setSaveResult();
     setStatus('Extraccion completada. Revisa los datos, completa motivo y zona, y registra la rendicion.', 'success');
   } catch (error) {
-    setStatus('Ocurrio un error al procesar el archivo.', 'error');
+    const message = error.message || 'Ocurrio un error al procesar el archivo.';
+    setStatus(message, 'error');
+    setSaveResult(message, 'error');
+    resultPanel.classList.add('hidden');
   } finally {
     isUploading = false;
   }
