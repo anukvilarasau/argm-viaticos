@@ -29,8 +29,8 @@ body {
   font-family: "Cormorant Garamond", Georgia, serif;
   color: var(--text);
   background:
-    linear-gradient(180deg, rgba(247, 242, 233, 0.92), rgba(234, 225, 210, 0.94)),
-    url("/assets/argm-tech-background.png") center top / cover no-repeat fixed;
+    radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.78), transparent 20%),
+    linear-gradient(180deg, #f3eee5 0%, #ece3d5 54%, #e4d8c7 100%);
 }
 
 body::before {
@@ -38,9 +38,10 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.64), transparent 18%),
-    radial-gradient(circle at 84% 20%, rgba(255, 255, 255, 0.42), transparent 16%),
-    radial-gradient(circle at 50% 80%, rgba(255, 248, 237, 0.28), transparent 18%);
+    linear-gradient(90deg, transparent 0, transparent 8%, rgba(142, 134, 122, 0.04) 8.1%, transparent 8.2%, transparent 100%),
+    linear-gradient(0deg, transparent 0, transparent 8%, rgba(142, 134, 122, 0.035) 8.1%, transparent 8.2%, transparent 100%);
+  background-size: 88px 88px;
+  opacity: 0.42;
   pointer-events: none;
 }
 
@@ -291,12 +292,6 @@ pre {
 }
 
 @media (max-width: 720px) {
-  body {
-    background:
-      linear-gradient(180deg, rgba(247, 242, 233, 0.95), rgba(234, 225, 210, 0.96)),
-      url("/assets/argm-tech-background.png") 58% top / cover no-repeat fixed;
-  }
-
   .page {
     width: min(100vw - 14px, 1380px);
     padding-bottom: 30px;
