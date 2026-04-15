@@ -4,3 +4,5 @@ data/
 service-account.json
 .env
 .DS_Store
+.vercel
+.env*.local

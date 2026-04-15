@@ -75,6 +75,14 @@ function matchLine(text, patterns) {
   return '';
 }
 
+function normalizeTextForCompare(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 function detectCategory(text) {
   const lower = text.toLowerCase();
   if (/hotel|alojamiento|hospedaje/.test(lower)) return 'Alojamiento';
@@ -82,6 +90,46 @@ function detectCategory(text) {
   if (/restaurante|almuerzo|cena|desayuno|comida/.test(lower)) return 'Alimentacion';
   if (/taxi|uber|cabify|transporte|pasaje|peaje/.test(lower)) return 'Transporte';
   return 'Pendiente de confirmacion';
+}
+
+function isAddressLine(line) {
+  return /direccion|domicilio|suc\.|sucursal|mendoza|tunuyan|calle|avenida|av\.|localidad/.test(
+    normalizeTextForCompare(line)
+  );
+}
+
+function looksLikeInvoiceValue(value) {
+  const clean = sanitizeLine(value);
+  if (!clean || /pendiente/i.test(clean)) return false;
+  if (/generad[oa]/i.test(clean)) return false;
+  if (/^[A-ZÁÉÍÓÚÑ ]+$/.test(clean) && !/\d/.test(clean)) return false;
+  return /\d/.test(clean) || /[A-Z]{1,3}-\d+/i.test(clean);
+}
+
+function parseAmountNumber(value) {
+  const normalized = normalizeAmount(value);
+  if (!normalized) return null;
+
+  if (normalized.includes(',') && normalized.includes('.')) {
+    return Number(normalized.replace(/\./g, '').replace(',', '.'));
+  }
+
+  if (normalized.includes(',')) {
+    return Number(normalized.replace(/\./g, '').replace(',', '.'));
+  }
+
+  return Number(normalized);
+}
+
+function formatAmountNumber(value) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return 'pendiente de confirmacion';
+  }
+
+  return new Intl.NumberFormat('es-AR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
 function isLikelySupplierLine(line) {
@@ -118,6 +166,26 @@ function findSupplier(lines, compact) {
   return candidate || 'pendiente de confirmacion';
 }
 
+function findFallbackSupplier(lines) {
+  return (
+    lines.find((line) => {
+      const clean = sanitizeLine(line);
+      const lower = normalizeTextForCompare(clean);
+      if (!clean || clean.length < 4 || clean.length > 50) return false;
+      if (/\d/.test(clean)) return false;
+      if (isAddressLine(clean)) return false;
+      if (
+        /responsable inscripto|consumidor final|ticket|factura|comprobante|cuit|iva|cuenta corriente|remito/.test(
+          lower
+        )
+      ) {
+        return false;
+      }
+      return /^[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]+$/.test(clean);
+    }) || 'pendiente de confirmacion'
+  );
+}
+
 function isReasonableAmount(value) {
   const normalized = normalizeAmount(value);
   if (!normalized) return false;
@@ -143,6 +211,21 @@ function findAmount(lines, labelPattern) {
   return '';
 }
 
+function collectAmountCandidates(lines) {
+  return lines.flatMap((line) => {
+    const matches = line.match(/\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})|\d+(?:[.,]\d{2})/g) || [];
+    return matches
+      .map(normalizeAmount)
+      .filter(isReasonableAmount)
+      .map((value) => ({
+        raw: value,
+        number: parseAmountNumber(value),
+        line,
+      }))
+      .filter((item) => item.number && item.number > 0);
+  });
+}
+
 function findInvoice(lines, compact) {
   const explicit =
     matchLine(compact, [
@@ -165,26 +248,131 @@ function findInvoice(lines, compact) {
   return 'pendiente de confirmacion';
 }
 
+function findPayment(compact, lines) {
+  const exactKeyword = matchLine(compact, [/\b(cuenta corriente|tarjeta|efectivo|transferencia|debito|credito)\b/i]);
+  if (exactKeyword) {
+    return sanitizeLine(exactKeyword);
+  }
+
+  const paymentLine = lines.find((line) =>
+    /cuenta corriente|tarjeta|efectivo|transferencia|debito|credito/.test(normalizeTextForCompare(line))
+  );
+  if (!paymentLine) {
+    return 'pendiente de confirmacion';
+  }
+
+  const keywordMatch = paymentLine.match(/\b(cuenta corriente|tarjeta|efectivo|transferencia|debito|credito)\b/i);
+  return keywordMatch ? sanitizeLine(keywordMatch[1]) : 'pendiente de confirmacion';
+}
+
 function findDescription(lines, compact) {
   const explicit =
     matchLine(compact, [
       /(?:descripcion|concepto|detalle)[:\s]*([^\n]+)/i,
     ]) || '';
 
-  if (explicit && !/^(direccion|domicilio)[:]?$/i.test(explicit)) {
+  if (explicit && !/^(direccion|domicilio)[:]?$/i.test(explicit) && !isAddressLine(explicit)) {
     return explicit;
   }
 
   const detailLine = lines.find(
     (line) =>
-      !/direccion|domicilio|responsable inscripto|consumidor final|cuit|rut|nit|subtotal|impuesto|total|factura|comprobante|fecha|cuenta corriente|tarjeta|efectivo/.test(
+      !/direccion|domicilio|responsable inscripto|consumidor final|cuit|rut|nit|subtotal|impuesto|total|factura|comprobante|fecha|cuenta corriente|tarjeta|efectivo|redesoft/.test(
         line.toLowerCase()
       ) &&
+      !isAddressLine(line) &&
       !isLikelySupplierLine(line) &&
       !/\d{4,}/.test(line)
   );
 
   return detailLine || 'pendiente de confirmacion';
+}
+
+function validateAndReasonExpenseData(extracted, lines) {
+  const issues = [];
+  const result = { ...extracted };
+  const amountCandidates = collectAmountCandidates(lines);
+  const largestAmount = amountCandidates.reduce((best, item) => {
+    if (!best || item.number > best.number) return item;
+    return best;
+  }, null);
+
+  if (!looksLikeInvoiceValue(result.factura)) {
+    if (result.factura && result.factura !== 'pendiente de confirmacion') {
+      issues.push(`Se descarto '${result.factura}' como numero de factura porque parece razon social o texto general.`);
+    }
+
+    if (result.proveedor === 'pendiente de confirmacion' && /^[A-ZÁÉÍÓÚÑ ]+$/.test(result.factura || '')) {
+      result.proveedor = sanitizeLine(result.factura);
+      issues.push(`Se movio '${result.factura}' al proveedor porque parecia una razon social.`);
+    }
+
+    result.factura = 'pendiente de confirmacion';
+  }
+
+  if (result.proveedor === 'pendiente de confirmacion') {
+    const fallbackSupplier = findFallbackSupplier(lines);
+    if (fallbackSupplier !== 'pendiente de confirmacion') {
+      result.proveedor = fallbackSupplier;
+      issues.push(`Se detecto '${fallbackSupplier}' como proveedor probable.`);
+    }
+  }
+
+  if (result.descripcion !== 'pendiente de confirmacion' && isAddressLine(result.descripcion)) {
+    result.descripcion = 'pendiente de confirmacion';
+    issues.push('Se descarto la direccion como descripcion del gasto.');
+  }
+
+  result.pago = findPayment(lines.join('\n'), lines);
+
+  const subtotalNumber = parseAmountNumber(result.subtotal);
+  let taxesNumber = parseAmountNumber(result.impuestos);
+  let totalNumber = parseAmountNumber(result.total);
+
+  if (
+    subtotalNumber &&
+    taxesNumber &&
+    totalNumber &&
+    subtotalNumber === taxesNumber &&
+    subtotalNumber === totalNumber
+  ) {
+    taxesNumber = null;
+    result.impuestos = 'pendiente de confirmacion';
+    issues.push('Se descarto el importe de impuestos porque era identico al subtotal y al total.');
+  }
+
+  if (subtotalNumber && largestAmount && largestAmount.number > subtotalNumber) {
+    const largerNumber = largestAmount.number;
+    if (!totalNumber || totalNumber <= subtotalNumber) {
+      totalNumber = largerNumber;
+      result.total = formatAmountNumber(largerNumber);
+      issues.push(`Se reemplazo el total por ${result.total} porque era el importe mas alto coherente del comprobante.`);
+    }
+  }
+
+  if (subtotalNumber && totalNumber && totalNumber > subtotalNumber) {
+    const inferredTaxes = Number((totalNumber - subtotalNumber).toFixed(2));
+    if (!taxesNumber || taxesNumber <= 0 || taxesNumber >= totalNumber) {
+      taxesNumber = inferredTaxes;
+      result.impuestos = formatAmountNumber(inferredTaxes);
+      issues.push(`Se infirio el impuesto como diferencia entre total y subtotal: ${result.impuestos}.`);
+    }
+  }
+
+  if (subtotalNumber && totalNumber && totalNumber < subtotalNumber) {
+    result.total = 'pendiente de confirmacion';
+    issues.push('Se descarto el total porque era menor que el subtotal.');
+  }
+
+  if (result.proveedor === result.factura && result.proveedor !== 'pendiente de confirmacion') {
+    result.factura = 'pendiente de confirmacion';
+    issues.push('Se descarto la factura porque coincidia con el proveedor.');
+  }
+
+  return {
+    ...result,
+    issues,
+  };
 }
 
 function parseExpenseData(text) {
@@ -209,15 +397,10 @@ function parseExpenseData(text) {
   const taxes = findAmount(lines, /\biva\b|impuestos|impuesto/) || 'pendiente de confirmacion';
   const total = findAmount(lines, /importe total|\btotal\b/) || 'pendiente de confirmacion';
 
-  const payment =
-    matchLine(compact, [
-      /(?:metodo de pago|forma de pago|pago)[:\s]*([^\n]+)/i,
-      /\b(cuenta corriente|tarjeta|efectivo|transferencia|debito|credito)\b/i,
-    ]) || 'pendiente de confirmacion';
-
   const description = findDescription(lines, compact);
 
-  return {
+  return validateAndReasonExpenseData(
+    {
     fecha: date,
     factura: invoice,
     proveedor: supplier,
@@ -226,9 +409,11 @@ function parseExpenseData(text) {
     subtotal,
     impuestos: taxes,
     total,
-    pago: payment,
+    pago: findPayment(compact, lines),
     categoria: detectCategory(compact),
-  };
+    },
+    lines
+  );
 }
 
 async function extractTextFromPdf(filePath) {

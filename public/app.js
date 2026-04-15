@@ -6,6 +6,7 @@ const rawTextNode = document.getElementById('raw-text');
 const fileInput = document.getElementById('receipt');
 const selectedFileNode = document.getElementById('selected-file');
 const saveResultNode = document.getElementById('save-result');
+const issuesNode = document.getElementById('extraction-issues');
 let isUploading = false;
 let isSaving = false;
 const loadedScripts = new Map();
@@ -27,6 +28,20 @@ function setSaveResult(message = '', kind = '') {
 
   saveResultNode.textContent = message;
   saveResultNode.className = `save-result ${kind}`.trim();
+}
+
+function setIssues(issues = []) {
+  if (!issues.length) {
+    issuesNode.innerHTML = '';
+    issuesNode.className = 'issues hidden';
+    return;
+  }
+
+  issuesNode.innerHTML = `
+    <strong>Campos que requieren revision</strong>
+    <ul>${issues.map((issue) => `<li>${issue}</li>`).join('')}</ul>
+  `;
+  issuesNode.className = 'issues';
 }
 
 function fillForm(data) {
@@ -300,12 +315,14 @@ async function processSelectedFile(event) {
     fillForm(payload.extracted);
     rawTextNode.textContent = payload.rawText;
     resultPanel.classList.remove('hidden');
+    setIssues(payload.extracted?.issues || []);
     setSaveResult();
     setStatus('Extraccion completada. Revisa los datos, completa motivo y zona, y registra la rendicion.', 'success');
   } catch (error) {
     const message = error.message || 'Ocurrio un error al procesar el archivo.';
     setStatus(message, 'error');
     setSaveResult(message, 'error');
+    setIssues([]);
     resultPanel.classList.add('hidden');
   } finally {
     isUploading = false;
