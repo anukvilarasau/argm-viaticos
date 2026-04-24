@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Flux",
+    "slug": "flux-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F9F9FB"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F9F9FB"
+      }
+    },
+    "plugins": [
+      "react-native-reanimated"
+    ]
+  }
+}
