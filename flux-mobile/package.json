@@ -6,6 +6,9 @@
   "engines": {
     "node": "20.x"
   },
+  "overrides": {
+    "metro": "0.80.12"
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
