@@ -1,14 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import Animated, {
-  Easing,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import { Animated, Dimensions, Easing, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import { analyzeSchedule, generateLumeReply } from "../../services/lumeAi";
 import { ChatMessage, TimelineEvent } from "../../types";
@@ -28,18 +21,28 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
   const [draft, setDraft] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const translateX = useSharedValue(PANEL_WIDTH);
+  const translateX = useRef(new Animated.Value(PANEL_WIDTH)).current;
 
   useEffect(() => {
     if (visible) {
       setShouldRender(true);
-      translateX.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
       return;
     }
 
-    translateX.value = withTiming(PANEL_WIDTH, { duration: 220, easing: Easing.in(Easing.cubic) }, (finished) => {
+    Animated.timing(translateX, {
+      toValue: PANEL_WIDTH,
+      duration: 220,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
       if (finished) {
-        runOnJS(setShouldRender)(false);
+        setShouldRender(false);
       }
     });
   }, [translateX, visible]);
@@ -55,10 +58,6 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
   }, [messages, shouldRender]);
 
   const suggestions = useMemo(() => analyzeSchedule(events), [events]);
-
-  const panelStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
 
   const handleSend = async () => {
     const value = draft.trim();
@@ -96,7 +95,7 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
       <View className="flex-1 flex-row justify-end bg-text/15">
         <Pressable className="flex-1" onPress={onClose} />
 
-        <Animated.View style={panelStyle} className="h-full" pointerEvents="box-none">
+        <Animated.View style={{ transform: [{ translateX }] }} className="h-full" pointerEvents="box-none">
           <BlurView
             intensity={48}
             tint="light"

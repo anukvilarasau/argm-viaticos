@@ -1,12 +1,7 @@
 import { memo, useEffect } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Animated, Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-} from "react-native-reanimated";
+import { useRef } from "react";
 
 import { Goal } from "../../types";
 
@@ -23,18 +18,17 @@ type GoalCardProps = {
 };
 
 function GoalCardComponent({ goal, onToggle }: GoalCardProps) {
-  const scale = useSharedValue(1);
+  const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    scale.value = withSequence(withSpring(1.03), withSpring(1));
+    Animated.sequence([
+      Animated.spring(scale, { toValue: 1.03, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
+    ]).start();
   }, [goal.completed, scale]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
   return (
-    <Animated.View style={animatedStyle} className={`mr-4 w-48 rounded-card ${toneStyles[goal.tone]} p-4`}>
+    <Animated.View style={{ transform: [{ scale }] }} className={`mr-4 w-48 rounded-card ${toneStyles[goal.tone]} p-4`}>
       <View className="mb-10 flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <Text className="text-base font-semibold text-text">{goal.title}</Text>

@@ -1,44 +1,60 @@
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
-import { useEffect } from "react";
-import { View } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, View } from "react-native";
 
 export function AiOrb() {
-  const pulse = useSharedValue(1);
-  const rotation = useSharedValue(0);
+  const pulse = useRef(new Animated.Value(1)).current;
+  const rotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1.06, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1.06,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
     );
 
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 12000, easing: Easing.linear }),
-      -1,
-      false,
+    const rotationLoop = Animated.loop(
+      Animated.timing(rotation, {
+        toValue: 1,
+        duration: 12000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
     );
+
+    pulseLoop.start();
+    rotationLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      rotationLoop.stop();
+    };
   }, [pulse, rotation]);
 
-  const orbStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }, { rotate: `${rotation.value}deg` }],
-  }));
+  const spin = rotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
 
   return (
     <View className="items-center justify-center">
       <View className="absolute h-28 w-28 rounded-full bg-accent/10" />
-      <Animated.View style={orbStyle}>
+      <Animated.View
+        style={{
+          transform: [{ scale: pulse }, { rotate: spin }],
+        }}
+      >
         <LinearGradient
           colors={["#FF8ED8", "#8DE1FF", "#A7FFCF", "#CFC3FF"]}
           end={{ x: 1, y: 1 }}
