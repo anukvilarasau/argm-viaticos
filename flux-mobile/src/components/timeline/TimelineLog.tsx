@@ -7,9 +7,10 @@ import { TimelineEvent } from "../../types";
 type TimelineLogProps = {
   events: TimelineEvent[];
   onQuickLog: () => void;
+  onRemove: (eventId: string) => void;
 };
 
-export function TimelineLog({ events, onQuickLog }: TimelineLogProps) {
+export function TimelineLog({ events, onQuickLog, onRemove }: TimelineLogProps) {
   return (
     <View className="mt-8">
       <View className="mb-5 flex-row items-center justify-between">
@@ -25,9 +26,23 @@ export function TimelineLog({ events, onQuickLog }: TimelineLogProps) {
       </View>
 
       <View className="rounded-[28px] bg-surfaceSoft p-5">
-        {events.map((event, index) => (
-          <TimelineItem key={event.id} event={event} isLast={index === events.length - 1} />
-        ))}
+        {events.length ? (
+          events.map((event, index) => (
+            <TimelineItem
+              key={event.id}
+              event={event}
+              isLast={index === events.length - 1}
+              onRemove={() => onRemove(event.id)}
+            />
+          ))
+        ) : (
+          <View className="rounded-[24px] border border-dashed border-border bg-white px-5 py-6">
+            <Text className="text-base font-semibold text-text">Your timeline is empty.</Text>
+            <Text className="mt-2 text-sm leading-5 text-muted">
+              Add the first block below or tap quick log to drop in a lightweight placeholder and edit around it.
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );

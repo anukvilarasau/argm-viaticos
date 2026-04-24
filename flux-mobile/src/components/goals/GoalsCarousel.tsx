@@ -6,9 +6,14 @@ import { Goal } from "../../types";
 type GoalsCarouselProps = {
   goals: Goal[];
   onToggle: (goalId: string) => void;
+  onRemove: (goalId: string) => void;
 };
 
-export function GoalsCarousel({ goals, onToggle }: GoalsCarouselProps) {
+export function GoalsCarousel({ goals, onRemove, onToggle }: GoalsCarouselProps) {
+  if (!goals.length) {
+    return null;
+  }
+
   return (
     <View>
       <ScrollView
@@ -18,7 +23,12 @@ export function GoalsCarousel({ goals, onToggle }: GoalsCarouselProps) {
         showsHorizontalScrollIndicator={false}
       >
         {goals.slice(0, 5).map((goal) => (
-          <GoalCard key={goal.id} goal={goal} onToggle={() => onToggle(goal.id)} />
+          <GoalCard
+            key={goal.id}
+            goal={goal}
+            onRemove={() => onRemove(goal.id)}
+            onToggle={() => onToggle(goal.id)}
+          />
         ))}
       </ScrollView>
     </View>

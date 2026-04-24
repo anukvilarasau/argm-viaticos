@@ -15,9 +15,10 @@ const toneStyles = {
 type GoalCardProps = {
   goal: Goal;
   onToggle: () => void;
+  onRemove: () => void;
 };
 
-function GoalCardComponent({ goal, onToggle }: GoalCardProps) {
+function GoalCardComponent({ goal, onRemove, onToggle }: GoalCardProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -35,13 +36,22 @@ function GoalCardComponent({ goal, onToggle }: GoalCardProps) {
           <Text className="mt-2 text-sm text-muted">{goal.duration}</Text>
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          className={`h-9 w-9 items-center justify-center rounded-full ${goal.completed ? "bg-text" : "bg-white/80"}`}
-          onPress={onToggle}
-        >
-          <Feather color={goal.completed ? "#FFFFFF" : "#6F7483"} name={goal.completed ? "check" : "circle"} size={16} />
-        </Pressable>
+        <View className="gap-2">
+          <Pressable
+            accessibilityRole="button"
+            className={`h-9 w-9 items-center justify-center rounded-full ${goal.completed ? "bg-text" : "bg-white/80"}`}
+            onPress={onToggle}
+          >
+            <Feather color={goal.completed ? "#FFFFFF" : "#6F7483"} name={goal.completed ? "check" : "circle"} size={16} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            className="h-9 w-9 items-center justify-center rounded-full bg-white/60"
+            onPress={onRemove}
+          >
+            <Feather color="#6F7483" name="x" size={16} />
+          </Pressable>
+        </View>
       </View>
 
       <View className="self-start rounded-full bg-white/75 px-3 py-2">

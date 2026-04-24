@@ -1,17 +1,35 @@
 import { Feather } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
+import { AgendaComposer } from "../components/canvas/AgendaComposer";
 import { GoalsCarousel } from "../components/goals/GoalsCarousel";
 import { ScreenShell } from "../components/layout/ScreenShell";
 import { LumePanel } from "../components/lume/LumePanel";
+import { HamburgerMenu } from "../components/navigation/HamburgerMenu";
 import { AiOrb } from "../components/orb/AiOrb";
 import { TimelineLog } from "../components/timeline/TimelineLog";
 import { useFluxStore } from "../store/useFluxStore";
+import { RootTabParamList } from "../navigation/AppNavigator";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 
 export function DailyCanvasScreen() {
   const [panelOpen, setPanelOpen] = useState(false);
-  const { goals, timeline, messages, toggleGoal, quickLog, addMessage } = useFluxStore();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
+  const {
+    goals,
+    timeline,
+    messages,
+    toggleGoal,
+    quickLog,
+    addMessage,
+    addGoal,
+    removeGoal,
+    addTimelineEvent,
+    removeTimelineEvent,
+  } = useFluxStore();
 
   const completedGoals = useMemo(() => goals.filter((goal) => goal.completed).length, [goals]);
 
@@ -22,23 +40,47 @@ export function DailyCanvasScreen() {
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="rounded-[32px] bg-surface p-6">
+        <View className="overflow-hidden rounded-[36px] bg-surface p-6">
+          <View className="absolute left-0 top-0 h-32 w-32 rounded-full bg-accent/10" />
+          <View className="absolute right-[-20px] top-10 h-44 w-44 rounded-full bg-[#DFF8EF]" />
+
+          <View className="mb-6 flex-row items-center justify-between">
+            <Pressable className="h-12 w-12 items-center justify-center rounded-full bg-surfaceSoft" onPress={() => setMenuOpen(true)}>
+              <Feather color="#17181C" name="menu" size={20} />
+            </Pressable>
+
+            <View className="rounded-full bg-[#F2EEFF] px-4 py-2">
+              <Text className="text-xs font-semibold uppercase tracking-[1.3px] text-accent">Canvas editor</Text>
+            </View>
+          </View>
+
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-4">
               <Text className="text-sm font-medium uppercase tracking-[1.6px] text-muted">Daily Canvas</Text>
-              <Text className="mt-3 text-[32px] font-semibold leading-[38px] text-text">Hello Anuk.</Text>
+              <Text className="mt-3 text-[34px] font-semibold leading-[40px] text-text">Set the day yourself.</Text>
               <Text className="mt-3 text-base leading-6 text-muted">
-                You have {5 - completedGoals} priority blocks left today. Keep the layout calm and let Lume handle the tradeoffs.
+                Flux no longer assumes your plan. Add only what matters, then let the interface stay out of the way.
               </Text>
             </View>
 
             <AiOrb />
           </View>
 
-          <View className="mt-6 flex-row items-center justify-between rounded-[28px] bg-surfaceSoft px-4 py-4">
-            <View>
-              <Text className="text-sm text-muted">Focused today</Text>
-              <Text className="mt-2 text-2xl font-semibold text-text">{completedGoals}/5 goals</Text>
+          <View className="mt-6 flex-row gap-3">
+            <View className="flex-1 rounded-[28px] bg-[#13141A] px-4 py-4">
+              <Text className="text-sm text-white/65">Goals completed</Text>
+              <Text className="mt-2 text-3xl font-semibold text-white">{completedGoals}/5</Text>
+            </View>
+            <View className="flex-1 rounded-[28px] bg-surfaceSoft px-4 py-4">
+              <Text className="text-sm text-muted">Timeline blocks</Text>
+              <Text className="mt-2 text-3xl font-semibold text-text">{timeline.length}</Text>
+            </View>
+          </View>
+
+          <View className="mt-4 flex-row items-center justify-between rounded-[28px] bg-[#F6F1FF] px-4 py-4">
+            <View className="flex-1 pr-3">
+              <Text className="text-sm font-medium text-text">Need help after planning?</Text>
+              <Text className="mt-1 text-sm leading-5 text-muted">Open Lume once your own agenda is loaded and it will suggest adjustments.</Text>
             </View>
 
             <Pressable className="flex-row items-center rounded-full bg-accent px-4 py-3" onPress={() => setPanelOpen(true)}>
@@ -50,12 +92,37 @@ export function DailyCanvasScreen() {
 
         <View className="mt-8">
           <Text className="text-xl font-semibold text-text">Daily Goals</Text>
-          <Text className="mt-1 text-sm text-muted">Five cards max, each designed for a fast yes-or-no decision.</Text>
-          <GoalsCarousel goals={goals} onToggle={toggleGoal} />
+          <Text className="mt-1 text-sm text-muted">Five cards max, created by you and removable whenever the day changes.</Text>
+          {goals.length ? null : (
+            <View className="mt-5 rounded-[28px] border border-dashed border-border bg-surface px-5 py-6">
+              <Text className="text-base font-semibold text-text">No goals yet.</Text>
+              <Text className="mt-2 text-sm leading-5 text-muted">
+                Use the planner below to create your first block. The carousel will appear here as soon as you add one.
+              </Text>
+            </View>
+          )}
+          <GoalsCarousel goals={goals} onRemove={removeGoal} onToggle={toggleGoal} />
         </View>
 
-        <TimelineLog events={timeline} onQuickLog={quickLog} />
+        <AgendaComposer goalCount={goals.length} onAddGoal={addGoal} onAddTimelineEvent={addTimelineEvent} />
+
+        <TimelineLog events={timeline} onQuickLog={quickLog} onRemove={removeTimelineEvent} />
       </ScrollView>
+
+      <HamburgerMenu
+        completedGoals={completedGoals}
+        onClose={() => setMenuOpen(false)}
+        onOpenInsights={() => {
+          setMenuOpen(false);
+          navigation.navigate("Insights");
+        }}
+        onOpenLume={() => {
+          setMenuOpen(false);
+          setPanelOpen(true);
+        }}
+        timelineCount={timeline.length}
+        visible={menuOpen}
+      />
 
       <LumePanel
         events={timeline}
