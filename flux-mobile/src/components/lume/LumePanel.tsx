@@ -137,6 +137,7 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
                 ref={scrollRef}
                 className="flex-1"
                 contentContainerStyle={{ gap: 12, paddingBottom: 20 }}
+                keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
                 {messages.map((message) => (

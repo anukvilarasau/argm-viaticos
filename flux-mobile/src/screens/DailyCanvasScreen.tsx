@@ -77,11 +77,12 @@ export function DailyCanvasScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 140 }}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View className="overflow-hidden rounded-[36px] bg-surface p-6">
-          <View className="absolute left-0 top-0 h-32 w-32 rounded-full bg-accent/10" />
-          <View className="absolute right-[-20px] top-10 h-44 w-44 rounded-full bg-[#DFF8EF]" />
+          <View className="absolute left-0 top-0 h-32 w-32 rounded-full bg-accent/10" pointerEvents="none" />
+          <View className="absolute right-[-20px] top-10 h-44 w-44 rounded-full bg-[#DFF8EF]" pointerEvents="none" />
 
           <View className="mb-6 flex-row items-center justify-between">
             <Pressable className="h-12 w-12 items-center justify-center rounded-full bg-surfaceSoft" onPress={() => setMenuOpen(true)}>

@@ -30,7 +30,7 @@ export function GoogleCalendarCard({
 }: GoogleCalendarCardProps) {
   return (
     <View className="mt-8 overflow-hidden rounded-[32px] bg-surface p-5">
-      <View className="absolute right-[-18px] top-[-18px] h-28 w-28 rounded-full bg-[#E8F0FF]" />
+      <View className="absolute right-[-18px] top-[-18px] h-28 w-28 rounded-full bg-[#E8F0FF]" pointerEvents="none" />
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-4">
           <Text className="text-xl font-semibold text-text">Google Calendar</Text>

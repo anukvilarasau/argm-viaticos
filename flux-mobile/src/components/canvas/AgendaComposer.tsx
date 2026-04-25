@@ -27,18 +27,30 @@ export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent, selec
   const [eventDescription, setEventDescription] = useState("");
   const [eventTags, setEventTags] = useState("");
   const [eventCategory, setEventCategory] = useState<TimelineEvent["category"]>("focus");
+  const [goalError, setGoalError] = useState<string | null>(null);
+  const [eventError, setEventError] = useState<string | null>(null);
+
+  const goalReady = Boolean(goalTitle.trim() && goalDuration.trim() && goalCount < 5);
+  const eventReady = Boolean(eventTime.trim() && eventTitle.trim() && eventDescription.trim());
 
   const addGoal = () => {
     const title = goalTitle.trim();
     const duration = goalDuration.trim();
 
-    if (!title || !duration || goalCount >= 5) {
+    if (!title || !duration) {
+      setGoalError("Add a title and duration before saving the goal.");
+      return;
+    }
+
+    if (goalCount >= 5) {
+      setGoalError("You already reached the five-goal limit for this day.");
       return;
     }
 
     onAddGoal({ duration, title });
     setGoalTitle("");
     setGoalDuration("");
+    setGoalError(null);
   };
 
   const addEvent = () => {
@@ -47,6 +59,7 @@ export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent, selec
     const description = eventDescription.trim();
 
     if (!time || !title || !description) {
+      setEventError("Time, title, and description are required.");
       return;
     }
 
@@ -67,6 +80,7 @@ export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent, selec
     setEventDescription("");
     setEventTags("");
     setEventCategory("focus");
+    setEventError(null);
   };
 
   return (
@@ -83,32 +97,54 @@ export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent, selec
         </View>
 
         <View className="rounded-[28px] bg-[#F4F5FA] p-4">
+          <View className="mb-4 rounded-[22px] bg-white px-4 py-3">
+            <Text className="text-xs font-semibold uppercase tracking-[1px] text-muted">Selected date</Text>
+            <Text className="mt-1 text-base font-semibold text-text">{selectedDateLabel}</Text>
+          </View>
           <Text className="text-sm font-semibold text-text">Add goal</Text>
           <View className="mt-3 gap-3">
             <TextInput
               className="rounded-[20px] bg-white px-4 py-4 text-base text-text"
-              onChangeText={setGoalTitle}
+              onChangeText={(value) => {
+                setGoalTitle(value);
+                if (goalError) {
+                  setGoalError(null);
+                }
+              }}
               placeholder="Goal title"
               placeholderTextColor="#8A8F9E"
+              returnKeyType="next"
               value={goalTitle}
             />
             <View className="flex-row gap-3">
               <TextInput
                 className="flex-1 rounded-[20px] bg-white px-4 py-4 text-base text-text"
-                onChangeText={setGoalDuration}
+                onChangeText={(value) => {
+                  setGoalDuration(value);
+                  if (goalError) {
+                    setGoalError(null);
+                  }
+                }}
                 placeholder="Duration, e.g. 45 min"
                 placeholderTextColor="#8A8F9E"
+                returnKeyType="done"
+                onSubmitEditing={addGoal}
                 value={goalDuration}
               />
               <Pressable
-                className={`items-center justify-center rounded-[20px] px-5 ${
-                  goalCount >= 5 ? "bg-border" : "bg-accent"
+                className={`min-w-[132px] flex-row items-center justify-center rounded-[20px] px-5 ${
+                  goalReady ? "bg-accent" : "bg-border"
                 }`}
+                disabled={!goalReady}
                 onPress={addGoal}
               >
                 <Feather color="#FFFFFF" name="plus" size={18} />
+                <Text className="ml-2 text-sm font-semibold text-white">Add goal</Text>
               </Pressable>
             </View>
+            <Text className={`text-sm ${goalError ? "text-[#C14B6D]" : "text-muted"}`}>
+              {goalError ?? "Example: Deep work sprint, 45 min."}
+            </Text>
           </View>
         </View>
       </View>
@@ -123,25 +159,43 @@ export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent, selec
           <View className="flex-row gap-3">
             <TextInput
               className="w-28 rounded-[20px] bg-white/10 px-4 py-4 text-base text-white"
-              onChangeText={setEventTime}
+              onChangeText={(value) => {
+                setEventTime(value);
+                if (eventError) {
+                  setEventError(null);
+                }
+              }}
               placeholder="09:30"
               placeholderTextColor="rgba(255,255,255,0.45)"
+              returnKeyType="next"
               value={eventTime}
             />
             <TextInput
               className="flex-1 rounded-[20px] bg-white/10 px-4 py-4 text-base text-white"
-              onChangeText={setEventTitle}
+              onChangeText={(value) => {
+                setEventTitle(value);
+                if (eventError) {
+                  setEventError(null);
+                }
+              }}
               placeholder="Event title"
               placeholderTextColor="rgba(255,255,255,0.45)"
+              returnKeyType="next"
               value={eventTitle}
             />
           </View>
 
           <TextInput
             className="rounded-[20px] bg-white/10 px-4 py-4 text-base text-white"
-            onChangeText={setEventDescription}
+            onChangeText={(value) => {
+              setEventDescription(value);
+              if (eventError) {
+                setEventError(null);
+              }
+            }}
             placeholder="Short description"
             placeholderTextColor="rgba(255,255,255,0.45)"
+            returnKeyType="next"
             value={eventDescription}
           />
 
@@ -150,6 +204,8 @@ export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent, selec
             onChangeText={setEventTags}
             placeholder="Tags, separated by commas"
             placeholderTextColor="rgba(255,255,255,0.45)"
+            returnKeyType="done"
+            onSubmitEditing={addEvent}
             value={eventTags}
           />
 
@@ -168,10 +224,17 @@ export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent, selec
             })}
           </View>
 
-          <Pressable className="mt-1 flex-row items-center justify-center rounded-[22px] bg-accent px-5 py-4" onPress={addEvent}>
+          <Pressable
+            className={`mt-1 flex-row items-center justify-center rounded-[22px] px-5 py-4 ${eventReady ? "bg-accent" : "bg-white/15"}`}
+            disabled={!eventReady}
+            onPress={addEvent}
+          >
             <Feather color="#FFFFFF" name="corner-down-right" size={18} />
             <Text className="ml-2 text-sm font-semibold text-white">Add to timeline</Text>
           </Pressable>
+          <Text className={`text-sm ${eventError ? "text-[#FF9BB7]" : "text-white/65"}`}>
+            {eventError ?? "Choose a time and title, then the button activates."}
+          </Text>
         </View>
       </View>
     </View>

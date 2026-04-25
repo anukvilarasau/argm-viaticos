@@ -48,9 +48,10 @@ export function AiOrb() {
   });
 
   return (
-    <View className="items-center justify-center">
-      <View className="absolute h-28 w-28 rounded-full bg-accent/10" />
+    <View className="items-center justify-center" pointerEvents="none">
+      <View className="absolute h-28 w-28 rounded-full bg-accent/10" pointerEvents="none" />
       <Animated.View
+        pointerEvents="none"
         style={{
           transform: [{ scale: pulse }, { rotate: spin }],
         }}
