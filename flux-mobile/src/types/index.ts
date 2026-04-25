@@ -1,3 +1,5 @@
+export type ISODateString = string;
+
 export type Goal = {
   id: string;
   title: string;
@@ -13,6 +15,18 @@ export type TimelineEvent = {
   description: string;
   tags: string[];
   category: "work" | "wellness" | "focus" | "social";
+};
+
+export type AgendaDay = {
+  goals: Goal[];
+  timeline: TimelineEvent[];
+};
+
+export type GoogleCalendarConnection = {
+  accessToken: string | null;
+  connected: boolean;
+  email: string | null;
+  status: "idle" | "connecting" | "connected" | "error";
 };
 
 export type ChatMessage = {

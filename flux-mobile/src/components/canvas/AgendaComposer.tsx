@@ -6,6 +6,7 @@ import { TimelineEvent } from "../../types";
 
 type AgendaComposerProps = {
   goalCount: number;
+  selectedDateLabel: string;
   onAddGoal: (input: { duration: string; title: string }) => void;
   onAddTimelineEvent: (input: {
     category: TimelineEvent["category"];
@@ -18,7 +19,7 @@ type AgendaComposerProps = {
 
 const categories: TimelineEvent["category"][] = ["focus", "work", "wellness", "social"];
 
-export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent }: AgendaComposerProps) {
+export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent, selectedDateLabel }: AgendaComposerProps) {
   const [goalTitle, setGoalTitle] = useState("");
   const [goalDuration, setGoalDuration] = useState("");
   const [eventTime, setEventTime] = useState("");
@@ -74,7 +75,7 @@ export function AgendaComposer({ goalCount, onAddGoal, onAddTimelineEvent }: Age
         <View className="mb-4 flex-row items-center justify-between">
           <View>
             <Text className="text-xl font-semibold text-text">Build your day</Text>
-            <Text className="mt-1 text-sm text-muted">Nothing is preloaded now. You define the agenda from here.</Text>
+            <Text className="mt-1 text-sm text-muted">Planning for {selectedDateLabel}. Nothing is preloaded now.</Text>
           </View>
           <View className="rounded-full bg-accentSoft px-3 py-2">
             <Text className="text-xs font-semibold uppercase tracking-[1px] text-accent">{goalCount}/5 goals</Text>

@@ -8,19 +8,22 @@ import { pieData, trendData } from "../data/mockData";
 import { useFluxStore } from "../store/useFluxStore";
 
 export function InsightsScreen() {
-  const { goals, timeline } = useFluxStore();
+  const { agendaByDate, selectedDate } = useFluxStore();
   const chartWidth = Dimensions.get("window").width - 88;
+  const selectedAgenda = agendaByDate[selectedDate] ?? { goals: [], timeline: [] };
 
   const summary = useMemo(() => {
-    const completed = goals.filter((goal) => goal.completed).length;
-    const logCount = timeline.length;
+    const completed = selectedAgenda.goals.filter((goal) => goal.completed).length;
+    const logCount = selectedAgenda.timeline.length;
+    const plannedDays = Object.values(agendaByDate).filter((agenda) => agenda.goals.length || agenda.timeline.length).length;
 
     return {
       completed,
       logCount,
+      plannedDays,
       consistency: Math.min(96, 52 + completed * 8 + logCount * 2),
     };
-  }, [goals, timeline]);
+  }, [agendaByDate, selectedAgenda.goals, selectedAgenda.timeline]);
 
   return (
     <ScreenShell>
@@ -43,8 +46,8 @@ export function InsightsScreen() {
             <Text className="mt-2 text-3xl font-semibold text-white">{summary.consistency}%</Text>
           </View>
           <View className="flex-1 rounded-[28px] bg-surface px-5 py-5">
-            <Text className="text-sm text-muted">Entries today</Text>
-            <Text className="mt-2 text-3xl font-semibold text-text">{summary.logCount}</Text>
+            <Text className="text-sm text-muted">Planned days</Text>
+            <Text className="mt-2 text-3xl font-semibold text-text">{summary.plannedDays}</Text>
           </View>
         </View>
 

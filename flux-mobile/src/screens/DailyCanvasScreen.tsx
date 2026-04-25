@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
+import { DatePlanner } from "../components/calendar/DatePlanner";
+import { GoogleCalendarCard } from "../components/calendar/GoogleCalendarCard";
 import { AgendaComposer } from "../components/canvas/AgendaComposer";
 import { GoalsCarousel } from "../components/goals/GoalsCarousel";
 import { ScreenShell } from "../components/layout/ScreenShell";
@@ -10,18 +12,22 @@ import { LumePanel } from "../components/lume/LumePanel";
 import { HamburgerMenu } from "../components/navigation/HamburgerMenu";
 import { AiOrb } from "../components/orb/AiOrb";
 import { TimelineLog } from "../components/timeline/TimelineLog";
+import { useGoogleCalendar } from "../hooks/useGoogleCalendar";
 import { useFluxStore } from "../store/useFluxStore";
 import { RootTabParamList } from "../navigation/AppNavigator";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { formatLongDate } from "../utils/date";
 
 export function DailyCanvasScreen() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const {
-    goals,
-    timeline,
+    agendaByDate,
     messages,
+    selectedDate,
+    setSelectedDate,
     toggleGoal,
     quickLog,
     addMessage,
@@ -29,9 +35,42 @@ export function DailyCanvasScreen() {
     removeGoal,
     addTimelineEvent,
     removeTimelineEvent,
+    importTimelineEvents,
   } = useFluxStore();
+  const { connect, disconnect, email, exportDate, importDate, isConfigured, isConnected, status } = useGoogleCalendar();
+
+  const selectedAgenda = agendaByDate[selectedDate] ?? { goals: [], timeline: [] };
+  const goals = selectedAgenda.goals;
+  const timeline = selectedAgenda.timeline;
+  const datesWithItems = useMemo(
+    () =>
+      Object.entries(agendaByDate)
+        .filter(([, agenda]) => agenda.goals.length || agenda.timeline.length)
+        .map(([date]) => date),
+    [agendaByDate],
+  );
+  const selectedDateLabel = useMemo(() => formatLongDate(selectedDate), [selectedDate]);
 
   const completedGoals = useMemo(() => goals.filter((goal) => goal.completed).length, [goals]);
+
+  const handleImportGoogleEvents = async () => {
+    try {
+      const importedEvents = await importDate(selectedDate);
+      importTimelineEvents(selectedDate, importedEvents);
+      setSyncMessage(`Imported ${importedEvents.length} Google events for ${selectedDateLabel}.`);
+    } catch (error) {
+      setSyncMessage(error instanceof Error ? error.message : "Unable to import Google events.");
+    }
+  };
+
+  const handleExportGoogleEvents = async () => {
+    try {
+      await exportDate(selectedDate, timeline);
+      setSyncMessage(`Exported ${timeline.length} Flux events to Google Calendar for ${selectedDateLabel}.`);
+    } catch (error) {
+      setSyncMessage(error instanceof Error ? error.message : "Unable to export Google events.");
+    }
+  };
 
   return (
     <ScreenShell>
@@ -59,7 +98,7 @@ export function DailyCanvasScreen() {
               <Text className="text-sm font-medium uppercase tracking-[1.6px] text-muted">Daily Canvas</Text>
               <Text className="mt-3 text-[34px] font-semibold leading-[40px] text-text">Set the day yourself.</Text>
               <Text className="mt-3 text-base leading-6 text-muted">
-                Flux no longer assumes your plan. Add only what matters, then let the interface stay out of the way.
+                Planning for {selectedDateLabel}. Flux no longer assumes your plan. Add only what matters, then let the interface stay out of the way.
               </Text>
             </View>
 
@@ -104,7 +143,34 @@ export function DailyCanvasScreen() {
           <GoalsCarousel goals={goals} onRemove={removeGoal} onToggle={toggleGoal} />
         </View>
 
-        <AgendaComposer goalCount={goals.length} onAddGoal={addGoal} onAddTimelineEvent={addTimelineEvent} />
+        <DatePlanner datesWithItems={datesWithItems} onSelectDate={setSelectedDate} selectedDate={selectedDate} />
+
+        <GoogleCalendarCard
+          canExport={isConnected && timeline.length > 0}
+          canImport={isConnected}
+          email={email}
+          isConfigured={isConfigured}
+          isConnected={isConnected}
+          onConnect={connect}
+          onDisconnect={disconnect}
+          onExport={handleExportGoogleEvents}
+          onImport={handleImportGoogleEvents}
+          selectedDateLabel={selectedDateLabel}
+          status={status}
+        />
+
+        {syncMessage ? (
+          <View className="mt-4 rounded-[24px] bg-[#F2EEFF] px-5 py-4">
+            <Text className="text-sm font-medium text-text">{syncMessage}</Text>
+          </View>
+        ) : null}
+
+        <AgendaComposer
+          goalCount={goals.length}
+          onAddGoal={addGoal}
+          onAddTimelineEvent={addTimelineEvent}
+          selectedDateLabel={selectedDateLabel}
+        />
 
         <TimelineLog events={timeline} onQuickLog={quickLog} onRemove={removeTimelineEvent} />
       </ScrollView>

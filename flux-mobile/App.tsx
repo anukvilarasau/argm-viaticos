@@ -4,6 +4,7 @@ import "./src/styles/global.css";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, useFonts } from "@expo-google-fonts/inter";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import * as WebBrowser from "expo-web-browser";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AppNavigator } from "./src/navigation/AppNavigator";
@@ -20,6 +21,8 @@ const navigationTheme = {
     primary: appTheme.colors.accent,
   },
 };
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function App() {
   const [fontsLoaded] = useFonts({
