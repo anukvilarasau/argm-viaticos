@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import * as Google from "expo-auth-session/providers/google";
+import { Platform } from "react-native";
 
 import {
   createGoogleCalendarEvent,
@@ -20,13 +21,20 @@ export function useGoogleCalendar() {
   const [email, setEmail] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "connecting" | "connected" | "error">("idle");
 
-  const isConfigured = useMemo(
-    () => Boolean(googleConfig.webClientId || googleConfig.iosClientId || googleConfig.androidClientId),
+  const platformClientId = useMemo(
+    () =>
+      Platform.select({
+        android: googleConfig.androidClientId,
+        ios: googleConfig.iosClientId,
+        default: googleConfig.webClientId,
+      }) ?? null,
     [],
   );
+  const isConfigured = Boolean(platformClientId);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     ...googleConfig,
+    clientId: platformClientId ?? "flux-google-oauth-placeholder",
     scopes: googleCalendarScopes,
   });
 
