@@ -30,7 +30,7 @@ export function DatePlanner({ datesWithItems, onSelectDate, selectedDate }: Date
   }
 
   return (
-    <View className="mt-8 rounded-[32px] bg-surface p-5">
+    <View className="rounded-[32px] bg-surface p-5">
       <View className="mb-4">
         <Text className="text-xl font-semibold text-text">Calendar</Text>
         <Text className="mt-1 text-sm text-muted">{formatMonthLabel(selectedDate)}. Tap any day to plan ahead.</Text>

@@ -1,4 +1,3 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, View } from "react-native";
 
@@ -10,14 +9,14 @@ export function AiOrb() {
     const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
-          toValue: 1.06,
-          duration: 1800,
+          toValue: 1.08,
+          duration: 1700,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(pulse, {
           toValue: 1,
-          duration: 1800,
+          duration: 1700,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
@@ -49,27 +48,12 @@ export function AiOrb() {
 
   return (
     <View className="items-center justify-center" pointerEvents="none">
-      <View className="absolute h-28 w-28 rounded-full bg-accent/10" pointerEvents="none" />
-      <Animated.View
-        pointerEvents="none"
-        style={{
-          transform: [{ scale: pulse }, { rotate: spin }],
-        }}
-      >
-        <LinearGradient
-          colors={["#FF8ED8", "#8DE1FF", "#A7FFCF", "#CFC3FF"]}
-          end={{ x: 1, y: 1 }}
-          start={{ x: 0, y: 0 }}
-          style={{
-            width: 76,
-            height: 76,
-            borderRadius: 38,
-            shadowColor: "#6D4AFF",
-            shadowOpacity: 0.18,
-            shadowRadius: 18,
-            shadowOffset: { width: 0, height: 8 },
-          }}
-        />
+      <Animated.View style={{ transform: [{ scale: pulse }, { rotate: spin }] }}>
+        <View className="h-[78px] w-[78px] items-center justify-center rounded-full bg-[#F1D2FF]/95">
+          <View className="absolute h-[78px] w-[78px] rounded-full bg-[#8DE1FF]/45" />
+          <View className="absolute h-[60px] w-[60px] rounded-full bg-[#A7FFCF]/55" />
+          <View className="absolute h-[42px] w-[42px] rounded-full bg-[#CFC3FF]/70" />
+        </View>
       </Animated.View>
     </View>
   );
