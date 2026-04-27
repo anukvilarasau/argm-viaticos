@@ -32,8 +32,8 @@ export function DatePlanner({ datesWithItems, onSelectDate, selectedDate }: Date
   return (
     <View className="rounded-[32px] bg-surface p-5">
       <View className="mb-4">
-        <Text className="text-xl font-semibold text-text">Calendar</Text>
-        <Text className="mt-1 text-sm text-muted">{formatMonthLabel(selectedDate)}. Tap any day to plan ahead.</Text>
+        <Text className="text-xl font-semibold text-text">Calendario</Text>
+        <Text className="mt-1 text-sm text-muted">{formatMonthLabel(selectedDate)}. Tocá cualquier día para planificar.</Text>
       </View>
 
       <Calendar

@@ -29,22 +29,22 @@ export function DailySummaryRail({
   const visibleTimeline = timeline.slice(0, 4);
 
   return (
-    <View className="w-full max-w-[390px]">
+    <View className="w-full max-w-[320px]" style={{ flexShrink: 1 }}>
       <Text className="text-[18px] font-medium uppercase tracking-[1.4px] text-white/90">Resumen del día</Text>
-      <Text className="mt-3 text-[58px] font-semibold leading-[60px] text-white">¡Hola!</Text>
-      <Text className="mt-3 text-[18px] leading-8 text-white/90">
+      <Text className="mt-3 text-[50px] font-semibold leading-[52px] text-white">¡Hola!</Text>
+      <Text className="mt-3 text-[16px] leading-7 text-white/90">
         Estás planificando {selectedDateLabel}. Tenés {goals.length} bloques clave y {completedGoals} ya marcados como hechos.
       </Text>
 
       <Text className="mt-7 text-[18px] font-semibold text-white">Enfoque del día</Text>
 
-      <View className="mt-4 flex-row flex-wrap gap-3">
+      <View className="mt-4 gap-3">
         {featuredGoals.length ? (
           featuredGoals.map((goal) => (
-            <View key={goal.id} className={`min-h-[176px] min-w-[170px] flex-1 rounded-[24px] px-4 py-4 ${toneStyle[goal.tone]}`}>
+            <View key={goal.id} className={`min-h-[158px] rounded-[24px] px-4 py-4 ${toneStyle[goal.tone]}`}>
               <View className="flex-row items-start justify-between">
                 <View className="flex-1 pr-3">
-                  <Text className="text-[18px] font-semibold text-text">{goal.title}</Text>
+                  <Text className="text-[17px] font-semibold text-text">{goal.title}</Text>
                   <Text className="mt-1 text-sm text-text/60">{goal.duration}</Text>
                 </View>
 
@@ -64,7 +64,7 @@ export function DailySummaryRail({
             </View>
           ))
         ) : (
-          <View className="min-h-[176px] flex-1 rounded-[24px] bg-white/88 px-4 py-5">
+          <View className="min-h-[158px] rounded-[24px] bg-white/88 px-4 py-5">
             <Text className="text-[18px] font-semibold text-text">Todavía no hay foco cargado</Text>
             <Text className="mt-3 text-sm leading-6 text-text/60">
               Usá el panel rápido para crear tu primera actividad o un objetivo para este día.

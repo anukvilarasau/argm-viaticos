@@ -50,9 +50,9 @@ export function InsightsScreen() {
         contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 18, paddingBottom: 170 }}
         showsVerticalScrollIndicator={false}
       >
-        <FluxHeader activeItem="planificacion" onPressHome={() => navigation.navigate("Canvas")} onPressPlanning={() => navigation.navigate("Insights")} />
+        <FluxHeader activeItem="inicio" onPressHome={() => navigation.navigate("Canvas")} onPressPlanning={() => navigation.navigate("Insights")} />
 
-        <View className="mt-10 flex-row flex-wrap items-start gap-6">
+        <View className="mt-10 flex-row flex-wrap items-start gap-5">
           <DailySummaryRail
             completedGoals={completedGoals}
             goals={selectedAgenda.goals}
@@ -61,8 +61,8 @@ export function InsightsScreen() {
             timeline={selectedAgenda.timeline}
           />
 
-          <View className="min-w-[360px] flex-1 gap-5">
-            <Text className="pl-2 text-[22px] font-semibold uppercase tracking-[1.5px] text-white">Insights & calendario</Text>
+          <View className="min-w-[0px] flex-1 gap-4" style={{ flexGrow: 1.05, flexShrink: 1, flexBasis: 350 }}>
+            <Text className="pl-2 text-[22px] font-semibold uppercase tracking-[1.5px] text-white">Inicio</Text>
 
             <View className="rounded-[32px] border border-white/45 bg-white/74 p-5 shadow-sm">
               <DatePlanner datesWithItems={datesWithItems} onSelectDate={setSelectedDate} selectedDate={selectedDate} />
@@ -96,7 +96,7 @@ export function InsightsScreen() {
             </InsightCard>
           </View>
 
-          <View className="min-w-[340px] flex-1 gap-5">
+          <View className="min-w-[0px] flex-1 gap-4" style={{ flexGrow: 1.1, flexShrink: 1, flexBasis: 360 }}>
             <View className="rounded-[32px] border border-white/45 bg-white/74 p-5 shadow-sm">
               <View className="mb-4 flex-row items-center">
                 <View className="h-12 w-12 rounded-full bg-[#E68BF7]/70" />

@@ -114,7 +114,7 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
                 <View className="flex-1 pr-4">
                   <Text className="text-2xl font-semibold text-text">Lume AI</Text>
                   <Text className="mt-1 text-sm leading-5 text-muted">
-                    Ask for schedule tradeoffs, light planning, or recovery suggestions.
+                    Pedí ayuda para reordenar tu agenda, planificar mejor o recuperar energía.
                   </Text>
                 </View>
 
@@ -124,7 +124,7 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
               </View>
 
               <View className="mb-5 rounded-[24px] bg-white/70 p-4">
-                <Text className="text-xs font-medium uppercase tracking-[1px] text-muted">Suggested changes</Text>
+                <Text className="text-xs font-medium uppercase tracking-[1px] text-muted">Cambios sugeridos</Text>
                 {suggestions.map((suggestion) => (
                   <View key={suggestion.title} className="mt-3 rounded-[20px] bg-background px-4 py-3">
                     <Text className="text-sm font-semibold text-text">{suggestion.title}</Text>
@@ -155,7 +155,7 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
 
                 {isThinking ? (
                   <View className="self-start rounded-[24px] bg-white/85 px-4 py-3">
-                    <Text className="text-sm text-muted">Lume is refining a suggestion...</Text>
+                    <Text className="text-sm text-muted">Lume está refinando una sugerencia...</Text>
                   </View>
                 ) : null}
               </ScrollView>
@@ -164,7 +164,7 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
                 <TextInput
                   className="flex-1 pr-3 text-base text-text"
                   onChangeText={setDraft}
-                  placeholder="Ask Lume to rebalance today..."
+                  placeholder="Pedile a Lume que reordene tu día..."
                   placeholderTextColor="#8A8F9E"
                   value={draft}
                   multiline

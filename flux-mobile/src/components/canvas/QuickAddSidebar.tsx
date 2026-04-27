@@ -94,27 +94,27 @@ export function QuickAddSidebar({
   };
 
   return (
-    <View className="w-full max-w-[320px] rounded-[30px] border border-white/45 bg-white/74 p-5 shadow-sm">
+    <View className="w-full max-w-[286px] rounded-[30px] border border-white/45 bg-white/74 p-4 shadow-sm" style={{ flexShrink: 1 }}>
       <Text className="text-sm font-medium uppercase tracking-[1.5px] text-text/70">Panel de carga rápida</Text>
-      <Text className="mt-2 text-base text-text/70">Creando para {selectedDateLabel}</Text>
+      <Text className="mt-2 text-sm text-text/70">Creando para {selectedDateLabel}</Text>
 
-      <View className="mt-5 gap-3">
+      <View className="mt-4 gap-3">
         <TextInput
-          className="rounded-[20px] bg-white px-4 py-4 text-base text-text"
+          className="rounded-[18px] bg-white px-4 py-3 text-base text-text"
           onChangeText={setTitle}
           placeholder="Añadir actividad (título)"
           placeholderTextColor="#8A8F9E"
           value={title}
         />
         <TextInput
-          className="rounded-[20px] bg-white px-4 py-4 text-base text-text"
+          className="rounded-[18px] bg-white px-4 py-3 text-base text-text"
           onChangeText={setTime}
           placeholder="Hora, ej. 17:00"
           placeholderTextColor="#8A8F9E"
           value={time}
         />
         <TextInput
-          className="rounded-[20px] bg-white px-4 py-4 text-base text-text"
+          className="rounded-[18px] bg-white px-4 py-3 text-base text-text"
           onChangeText={setDescription}
           placeholder="Descripción breve"
           placeholderTextColor="#8A8F9E"
@@ -123,14 +123,14 @@ export function QuickAddSidebar({
       </View>
 
       <Text className="mt-5 text-base font-semibold text-text">Categoría</Text>
-      <View className="mt-3 flex-row flex-wrap gap-3">
+      <View className="mt-3 flex-row flex-wrap gap-2">
         {categories.map((category) => {
           const active = selectedCategory === category.value;
 
           return (
             <Pressable
               key={category.value}
-              className={`min-w-[62px] items-center rounded-[18px] px-3 py-3 ${active ? "bg-[#EDE5FF]" : "bg-white/80"}`}
+              className={`min-w-[78px] flex-1 items-center rounded-[18px] px-2 py-3 ${active ? "bg-[#EDE5FF]" : "bg-white/80"}`}
               onPress={() => setSelectedCategory(category.value)}
             >
               <Feather color={active ? "#6D4AFF" : "#6F7483"} name={category.icon} size={18} />
@@ -153,11 +153,11 @@ export function QuickAddSidebar({
         ))}
       </View>
 
-      <Pressable className="mt-5 items-center rounded-[20px] bg-accent px-4 py-4" onPress={createActivity}>
+      <Pressable className="mt-5 items-center rounded-[18px] bg-accent px-4 py-4" onPress={createActivity}>
         <Text className="text-base font-semibold text-white">Crear actividad</Text>
       </Pressable>
 
-      <View className="mt-6 rounded-[24px] bg-white/70 p-4">
+      <View className="mt-5 rounded-[22px] bg-white/70 p-4">
         <Text className="text-base font-semibold text-text">Objetivo rápido</Text>
         <Text className="mt-1 text-sm text-text/55">{goalCount}/5 objetivos cargados</Text>
         <TextInput
@@ -179,7 +179,7 @@ export function QuickAddSidebar({
         </Pressable>
       </View>
 
-      <View className="mt-6 rounded-[24px] bg-[#F5F2FF] p-4">
+      <View className="mt-5 rounded-[22px] bg-[#F5F2FF] p-4">
         <Text className="text-base font-semibold text-text">Google Calendar</Text>
         <Text className="mt-1 text-sm text-text/60">
           {isConnected ? `Conectado como ${email ?? "usuario"}` : isConfigured ? "Listo para conectar" : "Faltan credenciales OAuth"}

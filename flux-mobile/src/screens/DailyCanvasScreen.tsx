@@ -57,9 +57,9 @@ export function DailyCanvasScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <FluxHeader activeItem="inicio" onPressHome={() => navigation.navigate("Canvas")} onPressPlanning={() => navigation.navigate("Insights")} />
+        <FluxHeader activeItem="planificacion" onPressHome={() => navigation.navigate("Canvas")} onPressPlanning={() => navigation.navigate("Insights")} />
 
-        <View className="mt-10 flex-row flex-wrap items-start gap-6">
+        <View className="mt-10 flex-row flex-wrap items-start gap-5">
           <DailySummaryRail
             completedGoals={completedGoals}
             goals={selectedAgenda.goals}
@@ -68,7 +68,7 @@ export function DailyCanvasScreen() {
             timeline={selectedAgenda.timeline}
           />
 
-          <View className="min-w-[520px] flex-1 gap-5">
+          <View className="min-w-[0px] flex-1 gap-4" style={{ flexGrow: 1.35, flexShrink: 1, flexBasis: 480 }}>
             <Text className="pl-2 text-[22px] font-semibold uppercase tracking-[1.5px] text-white">Planificación semanal</Text>
             <WeeklyPlannerBoard
               agendaByDate={agendaByDate}

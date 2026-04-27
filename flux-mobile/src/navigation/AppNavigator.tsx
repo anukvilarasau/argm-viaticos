@@ -34,8 +34,8 @@ export function AppNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Canvas" component={DailyCanvasScreen} />
-      <Tab.Screen name="Insights" component={InsightsScreen} />
+      <Tab.Screen name="Canvas" component={InsightsScreen} />
+      <Tab.Screen name="Insights" component={DailyCanvasScreen} />
     </Tab.Navigator>
   );
 }
