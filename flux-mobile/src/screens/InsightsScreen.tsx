@@ -36,6 +36,7 @@ export function InsightsScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { agendaByDate, messages, selectedDate, setSelectedDate, toggleGoal, addMessage } = useFluxStore();
   const chartWidth = Math.min(430, Dimensions.get("window").width - 80);
+  const sideCardChartWidth = Math.min(360, Dimensions.get("window").width - 120);
   const selectedAgenda = agendaByDate[selectedDate] ?? { goals: [], timeline: [] };
   const datesWithItems = useMemo(
     () =>
@@ -202,14 +203,14 @@ export function InsightsScreen() {
                 </View>
               </View>
 
-              <View className="flex-row flex-wrap gap-4">
+              <View className="gap-4">
                 <InsightCard title="Distribución de tiempo">
                   {pieChartData.length ? (
                     <VictoryPie
                       animate={{ duration: 500 }}
                       colorScale={pieChartData.map((item) => item.color)}
                       data={pieChartData}
-                      width={chartWidth / 1.8}
+                      width={sideCardChartWidth}
                       height={230}
                       innerRadius={52}
                       labels={() => ""}
@@ -221,7 +222,7 @@ export function InsightsScreen() {
 
                 <InsightCard title="Objetivos por categoría">
                   {hasCategoryData ? (
-                    <VictoryChart width={chartWidth / 1.35} height={230} domainPadding={24} padding={{ top: 18, left: 44, right: 12, bottom: 40 }}>
+                    <VictoryChart width={sideCardChartWidth} height={230} domainPadding={24} padding={{ top: 18, left: 44, right: 18, bottom: 40 }}>
                       <VictoryAxis style={{ tickLabels: { fontSize: 10, padding: 6, fill: "#6F7483" }, axis: { stroke: "#E2E5EC" } }} />
                       <VictoryAxis dependentAxis style={{ tickLabels: { fontSize: 10, fill: "#8A8F9E" }, axis: { stroke: "transparent" }, grid: { stroke: "#ECEEF4" } }} />
                       <VictoryBar
