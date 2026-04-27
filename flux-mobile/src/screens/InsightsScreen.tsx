@@ -39,7 +39,7 @@ export function InsightsScreen() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
-  const { agendaByDate, messages, selectedDate, setSelectedDate, toggleGoal, addMessage } = useFluxStore();
+  const { agendaByDate, messages, selectedDate, setSelectedDate, toggleGoal, addMessage, addTimelineEvent } = useFluxStore();
   const chartWidth = Math.min(430, Dimensions.get("window").width - 80);
   const sideCardChartWidth = Math.min(360, Dimensions.get("window").width - 120);
   const selectedAgenda = agendaByDate[selectedDate] ?? { goals: [], timeline: [] };
@@ -275,7 +275,9 @@ export function InsightsScreen() {
         events={selectedAgenda.timeline}
         messages={messages}
         onClose={() => setPanelOpen(false)}
+        onCreateEvent={addTimelineEvent}
         onSend={addMessage}
+        selectedDateLabel={selectedDateLabel}
         visible={panelOpen}
       />
 

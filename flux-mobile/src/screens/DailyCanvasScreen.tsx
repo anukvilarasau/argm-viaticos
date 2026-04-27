@@ -101,7 +101,9 @@ export function DailyCanvasScreen() {
         events={selectedAgenda.timeline}
         messages={messages}
         onClose={() => setPanelOpen(false)}
+        onCreateEvent={addTimelineEvent}
         onSend={addMessage}
+        selectedDateLabel={selectedDateLabel}
         visible={panelOpen}
       />
 

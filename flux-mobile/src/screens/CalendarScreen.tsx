@@ -20,7 +20,7 @@ export function CalendarScreen() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
-  const { agendaByDate, messages, selectedDate, setSelectedDate, addMessage } = useFluxStore();
+  const { agendaByDate, messages, selectedDate, setSelectedDate, addMessage, addTimelineEvent } = useFluxStore();
   const selectedAgenda = agendaByDate[selectedDate] ?? { goals: [], timeline: [] };
   const datesWithItems = useMemo(
     () =>
@@ -80,7 +80,9 @@ export function CalendarScreen() {
         events={selectedAgenda.timeline}
         messages={messages}
         onClose={() => setPanelOpen(false)}
+        onCreateEvent={addTimelineEvent}
         onSend={addMessage}
+        selectedDateLabel={selectedDateLabel}
         visible={panelOpen}
       />
 

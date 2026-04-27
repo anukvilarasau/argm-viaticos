@@ -3,7 +3,7 @@ import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Dimensions, Easing, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
-import { analyzeSchedule, generateLumeReply } from "../../services/lumeAi";
+import { analyzeSchedule, processLumeInput } from "../../services/lumeAi";
 import { ChatMessage, TimelineEvent } from "../../types";
 
 const PANEL_WIDTH = Math.min(Dimensions.get("window").width * 0.9, 420);
@@ -12,11 +12,19 @@ type LumePanelProps = {
   events: TimelineEvent[];
   messages: ChatMessage[];
   onClose: () => void;
+  onCreateEvent: (event: {
+    category: TimelineEvent["category"];
+    description: string;
+    tags: string[];
+    time: string;
+    title: string;
+  }) => void;
   onSend: (message: ChatMessage) => void;
+  selectedDateLabel: string;
   visible: boolean;
 };
 
-export function LumePanel({ events, messages, onClose, onSend, visible }: LumePanelProps) {
+export function LumePanel({ events, messages, onClose, onCreateEvent, onSend, selectedDateLabel, visible }: LumePanelProps) {
   const [shouldRender, setShouldRender] = useState(visible);
   const [draft, setDraft] = useState("");
   const [isThinking, setIsThinking] = useState(false);
@@ -76,12 +84,16 @@ export function LumePanel({ events, messages, onClose, onSend, visible }: LumePa
     setDraft("");
     setIsThinking(true);
 
-    const reply = await generateLumeReply(value, events);
+    const result = await processLumeInput(value, events, selectedDateLabel);
+
+    if (result.action?.type === "create_event") {
+      onCreateEvent(result.action.event);
+    }
 
     onSend({
       id: `assistant-${Date.now() + 1}`,
       role: "assistant",
-      content: reply,
+      content: result.reply,
     });
     setIsThinking(false);
   };
