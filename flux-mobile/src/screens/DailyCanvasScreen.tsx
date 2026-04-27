@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 
@@ -10,6 +10,8 @@ import { FluxHeader } from "../components/layout/FluxHeader";
 import { ScreenShell } from "../components/layout/ScreenShell";
 import { LumeLauncher } from "../components/lume/LumeLauncher";
 import { LumePanel } from "../components/lume/LumePanel";
+import { MobileNavMenu } from "../components/navigation/MobileNavMenu";
+import { MobileTopBar } from "../components/navigation/MobileTopBar";
 import { RootTabParamList } from "../navigation/AppNavigator";
 import { useGoogleCalendar } from "../hooks/useGoogleCalendar";
 import { useFluxStore } from "../store/useFluxStore";
@@ -17,6 +19,9 @@ import { formatLongDate, getWeekDates } from "../utils/date";
 
 export function DailyCanvasScreen() {
   const [panelOpen, setPanelOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const {
     agendaByDate,
@@ -47,13 +52,17 @@ export function DailyCanvasScreen() {
     <ScreenShell>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 18, paddingBottom: 170 }}
+        contentContainerStyle={{ paddingHorizontal: isMobile ? 16 : 22, paddingTop: 18, paddingBottom: 170 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <FluxHeader activeItem="planificacion" onPressHome={() => navigation.navigate("Canvas")} onPressPlanning={() => navigation.navigate("Insights")} />
+        {isMobile ? (
+          <MobileTopBar onOpenMenu={() => setMenuOpen(true)} title="Planificación" />
+        ) : (
+          <FluxHeader activeItem="planificacion" onPressHome={() => navigation.navigate("Canvas")} onPressPlanning={() => navigation.navigate("Insights")} />
+        )}
 
-        <View className="mt-10 flex-row flex-wrap items-start gap-5">
+        <View className={`mt-10 ${isMobile ? "gap-5" : "flex-row flex-wrap items-start gap-5"}`}>
           <PlanningControlPanel
             canExport={isConnected && selectedAgenda.timeline.length > 0}
             canImport={isConnected}
@@ -71,7 +80,7 @@ export function DailyCanvasScreen() {
             status={status}
           />
 
-          <View className="min-w-[0px] flex-1 gap-4" style={{ flexGrow: 1.35, flexShrink: 1, flexBasis: 480 }}>
+          <View className="min-w-[0px] flex-1 gap-4" style={isMobile ? undefined : { flexGrow: 1.35, flexShrink: 1, flexBasis: 480 }}>
             <Text className="pl-2 text-[22px] font-semibold uppercase tracking-[1.5px] text-white">Planificación semanal</Text>
             <WeeklyPlannerBoard
               agendaByDate={agendaByDate}
@@ -83,7 +92,7 @@ export function DailyCanvasScreen() {
 
         </View>
 
-        <FluxFooter />
+        {isMobile ? null : <FluxFooter />}
       </ScrollView>
 
       {panelOpen ? null : <LumeLauncher onPress={() => setPanelOpen(true)} />}
@@ -95,6 +104,29 @@ export function DailyCanvasScreen() {
         onSend={addMessage}
         visible={panelOpen}
       />
+
+      {isMobile ? (
+        <MobileNavMenu
+          onClose={() => setMenuOpen(false)}
+          onOpenCalendar={() => {
+            setMenuOpen(false);
+            navigation.navigate("Calendar");
+          }}
+          onOpenHome={() => {
+            setMenuOpen(false);
+            navigation.navigate("Canvas");
+          }}
+          onOpenLume={() => {
+            setMenuOpen(false);
+            setPanelOpen(true);
+          }}
+          onOpenPlanning={() => {
+            setMenuOpen(false);
+            navigation.navigate("Insights");
+          }}
+          visible={menuOpen}
+        />
+      ) : null}
     </ScreenShell>
   );
 }

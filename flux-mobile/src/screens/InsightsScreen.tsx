@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Dimensions, ScrollView, Text, View } from "react-native";
+import { Dimensions, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { VictoryAxis, VictoryBar, VictoryChart, VictoryLine, VictoryPie, VictoryTheme } from "victory-native";
@@ -12,6 +12,8 @@ import { FluxHeader } from "../components/layout/FluxHeader";
 import { ScreenShell } from "../components/layout/ScreenShell";
 import { LumeLauncher } from "../components/lume/LumeLauncher";
 import { LumePanel } from "../components/lume/LumePanel";
+import { MobileNavMenu } from "../components/navigation/MobileNavMenu";
+import { MobileTopBar } from "../components/navigation/MobileTopBar";
 import { RootTabParamList } from "../navigation/AppNavigator";
 import { useFluxStore } from "../store/useFluxStore";
 import { formatLongDate, formatWeekdayShort, getWeekDates } from "../utils/date";
@@ -33,6 +35,9 @@ function EmptyInsight({ message }: { message: string }) {
 
 export function InsightsScreen() {
   const [panelOpen, setPanelOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { agendaByDate, messages, selectedDate, setSelectedDate, toggleGoal, addMessage } = useFluxStore();
   const chartWidth = Math.min(430, Dimensions.get("window").width - 80);
@@ -138,12 +143,16 @@ export function InsightsScreen() {
     <ScreenShell>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 18, paddingBottom: 170 }}
+        contentContainerStyle={{ paddingHorizontal: isMobile ? 16 : 22, paddingTop: 18, paddingBottom: 170 }}
         showsVerticalScrollIndicator={false}
       >
-        <FluxHeader activeItem="inicio" onPressHome={() => navigation.navigate("Canvas")} onPressPlanning={() => navigation.navigate("Insights")} />
+        {isMobile ? (
+          <MobileTopBar onOpenMenu={() => setMenuOpen(true)} title="Inicio" />
+        ) : (
+          <FluxHeader activeItem="inicio" onPressHome={() => navigation.navigate("Canvas")} onPressPlanning={() => navigation.navigate("Insights")} />
+        )}
 
-        <View className="mt-10 flex-row flex-wrap items-start gap-5">
+        <View className={`mt-10 ${isMobile ? "gap-5" : "flex-row flex-wrap items-start gap-5"}`}>
           <DailySummaryRail
             completedGoals={completedGoals}
             goals={selectedAgenda.goals}
@@ -152,7 +161,7 @@ export function InsightsScreen() {
             timeline={selectedAgenda.timeline}
           />
 
-          <View className="min-w-[0px] flex-1 gap-4" style={{ flexGrow: 1.05, flexShrink: 1, flexBasis: 350 }}>
+          <View className="min-w-[0px] flex-1 gap-4" style={isMobile ? undefined : { flexGrow: 1.05, flexShrink: 1, flexBasis: 350 }}>
             <Text className="pl-2 text-[22px] font-semibold uppercase tracking-[1.5px] text-white">Inicio</Text>
 
             <View className="rounded-[32px] border border-white/45 bg-white/74 p-5 shadow-sm">
@@ -191,7 +200,7 @@ export function InsightsScreen() {
             </InsightCard>
           </View>
 
-          <View className="min-w-[0px] flex-1 gap-4" style={{ flexGrow: 1.1, flexShrink: 1, flexBasis: 360 }}>
+          <View className="min-w-[0px] flex-1 gap-4" style={isMobile ? undefined : { flexGrow: 1.1, flexShrink: 1, flexBasis: 360 }}>
             <View className="rounded-[32px] border border-white/45 bg-white/74 p-5 shadow-sm">
               <View className="mb-4 flex-row items-center">
                 <View className="h-12 w-12 rounded-full bg-[#E68BF7]/70" />
@@ -257,7 +266,7 @@ export function InsightsScreen() {
           </View>
         </View>
 
-        <FluxFooter />
+        {isMobile ? null : <FluxFooter />}
       </ScrollView>
 
       {panelOpen ? null : <LumeLauncher onPress={() => setPanelOpen(true)} />}
@@ -269,6 +278,29 @@ export function InsightsScreen() {
         onSend={addMessage}
         visible={panelOpen}
       />
+
+      {isMobile ? (
+        <MobileNavMenu
+          onClose={() => setMenuOpen(false)}
+          onOpenCalendar={() => {
+            setMenuOpen(false);
+            navigation.navigate("Calendar");
+          }}
+          onOpenHome={() => {
+            setMenuOpen(false);
+            navigation.navigate("Canvas");
+          }}
+          onOpenLume={() => {
+            setMenuOpen(false);
+            setPanelOpen(true);
+          }}
+          onOpenPlanning={() => {
+            setMenuOpen(false);
+            navigation.navigate("Insights");
+          }}
+          visible={menuOpen}
+        />
+      ) : null}
     </ScreenShell>
   );
 }

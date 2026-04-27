@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import { Goal, TimelineEvent } from "../../types";
 
@@ -25,14 +25,16 @@ export function DailySummaryRail({
   selectedDateLabel,
   timeline,
 }: DailySummaryRailProps) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const featuredGoals = goals.slice(0, 2);
   const visibleTimeline = timeline.slice(0, 4);
 
   return (
-    <View className="w-full max-w-[320px]" style={{ flexShrink: 1 }}>
+    <View className={`w-full ${isMobile ? "" : "max-w-[320px]"}`} style={{ flexShrink: 1 }}>
       <Text className="text-[18px] font-medium uppercase tracking-[1.4px] text-white/90">Resumen del día</Text>
-      <Text className="mt-3 text-[50px] font-semibold leading-[52px] text-white">¡Hola!</Text>
-      <Text className="mt-3 text-[16px] leading-7 text-white/90">
+      <Text className={`mt-3 font-semibold text-white ${isMobile ? "text-[42px] leading-[44px]" : "text-[50px] leading-[52px]"}`}>¡Hola!</Text>
+      <Text className={`mt-3 text-white/90 ${isMobile ? "text-[15px] leading-6" : "text-[16px] leading-7"}`}>
         Estás planificando {selectedDateLabel}. Tenés {goals.length} bloques clave y {completedGoals} ya marcados como hechos.
       </Text>
 
