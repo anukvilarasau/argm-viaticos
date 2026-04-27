@@ -36,8 +36,6 @@ export function FluxHeader({ activeItem, onPressHome, onPressPlanning }: FluxHea
         <View className="flex-row flex-wrap items-center gap-5">
           <NavItem active={activeItem === "inicio"} label="Inicio" onPress={onPressHome} />
           <NavItem active={activeItem === "planificacion"} label="Planificación" onPress={onPressPlanning} />
-          <NavItem label="Precios" />
-          <NavItem label="Blog" />
         </View>
 
         <Pressable className="rounded-full bg-accent px-5 py-3">
